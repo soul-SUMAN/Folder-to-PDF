@@ -7,8 +7,13 @@ import pdfRoutes from './routes/pdf.routes.js';
 import { errorHandler } from './middleware/error.js';
 
 const app = express();
+const configuredOrigins = (process.env.CLIENT_URL ?? '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean)
+  .map((origin) => new URL(origin).origin);
 const allowedOrigins = new Set([
-  process.env.CLIENT_URL,
+  ...configuredOrigins,
   'http://localhost:5173',
   'http://localhost:5174',
   'http://127.0.0.1:5173',
@@ -27,7 +32,9 @@ app.use(cors({
       return;
     }
 
-    callback(new Error('Not allowed by CORS'));
+    const error = new Error(`Origin ${origin} is not allowed by CORS`);
+    error.status = 403;
+    callback(error);
   },
   credentials: true,
 }));
