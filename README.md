@@ -69,8 +69,8 @@ Open the local URL printed by Vite (usually `http://localhost:5173`). The server
 The client filters files before upload. The server applies its own filtering as well.
 
 - Maximum accepted file size: 500 KiB per file.
-- Maximum number of uploaded files: 5,000.
-- Multer's request-level limit is 2 MiB per file; files larger than 500 KiB are subsequently excluded from the PDF.
+- Maximum number of uploaded files: 2,000.
+- Multer's request-level limit is 1 MiB per file and 5 MiB for the file-paths field; files larger than 500 KiB are subsequently excluded from the PDF.
 - Common generated/dependency directories such as `node_modules`, `.git`, `dist`, `build`, and `coverage` are skipped.
 - Common lock files, binary extensions, and `.env` files are skipped. `.env.example`, `.env.sample`, and `.env.template` are allowed.
 

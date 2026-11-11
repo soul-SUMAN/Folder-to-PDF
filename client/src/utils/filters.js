@@ -15,7 +15,7 @@ const BINARY_EXTENSIONS = new Set([
 const isSecretFile = (name) => /^\.env(\..+)?$/.test(name) && !/\.(example|sample|template)$/.test(name);
 
 const MAX_FILE_BYTES = 500 * 1024;
-export const MAX_FILE_COUNT = 5000;
+export const MAX_FILE_COUNT = 2000;
 
 export const isAcceptedFile = (file) => {
   const relativePath = file.webkitRelativePath;

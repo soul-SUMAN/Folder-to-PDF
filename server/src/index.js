@@ -15,7 +15,10 @@ const allowedOrigins = new Set([
   'http://127.0.0.1:5174',
 ].filter(Boolean));
 
+app.disable('x-powered-by');
 app.set('trust proxy', 1);
+app.get('/health', (_req, res) => res.json({ ok: true }));
+
 app.use(helmet());
 app.use(cors({
   origin(origin, callback) {
