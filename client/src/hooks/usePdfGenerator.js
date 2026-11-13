@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { generatePdf, downloadPdf } from '../api/pdfApi';
 import { isAcceptedFile, MAX_FILE_COUNT } from '../utils/filters';
+import { validateSelection } from '../utils/validation';
 import { PHASES } from '../constants/phases';
 
 const INITIAL_PROGRESS = { loaded: 0, total: 0, percent: 0, remaining: 0 };
@@ -15,6 +16,8 @@ const ERROR_MESSAGES = {
 const getFileLimitMessage = (count) =>
   `This folder has ${count} readable files, but the limit is ${MAX_FILE_COUNT}. Remove or exclude generated/dependency folders, then try again.`;
 
+
+
 const toProgress = ({ loaded, total }) => {
   const safeTotal = total ?? 0;
   const safeLoaded = Math.min(loaded, safeTotal);
@@ -28,6 +31,8 @@ const toProgress = ({ loaded, total }) => {
   };
 };
 
+
+
 export const usePdfGenerator = () => {
   const [files, setFiles] = useState([]);
   const [projectName, setProjectName] = useState('');
@@ -35,29 +40,25 @@ export const usePdfGenerator = () => {
   const [progress, setProgress] = useState(INITIAL_PROGRESS);
   const [error, setError] = useState('');
 
-  const selectFolder = useCallback((fileList) => {
-    const all = Array.from(fileList);
-    const accepted = all.filter(isAcceptedFile);
+ const selectFolder = useCallback((fileList) => {
+  const all = Array.from(fileList);
+  const accepted = filterAcceptedFiles(all);
+  const problem = validateSelection(accepted);
 
-    setFiles(accepted);
-    setProjectName(all[0]?.webkitRelativePath.split('/')[0] ?? '');
-    setProgress(INITIAL_PROGRESS);
+  setFiles(accepted);
+  setProjectName(all[0]?.webkitRelativePath.split('/')[0] ?? '');
+  setProgress(INITIAL_PROGRESS);
+  setPhase(problem ? PHASES.ERROR : PHASES.IDLE);
+  setError(problem);
+}, []);
 
-    if (accepted.length > MAX_FILE_COUNT) {
-      setPhase(PHASES.ERROR);
-      setError(getFileLimitMessage(accepted.length));
-    } else {
-      setPhase(PHASES.IDLE);
-      setError('');
-    }
-  }, []);
-
-  const generate = useCallback(async () => {
-    if (files.length > MAX_FILE_COUNT) {
-      setPhase(PHASES.ERROR);
-      setError(getFileLimitMessage(files.length));
-      return;
-    }
+const generate = useCallback(async () => {
+  const problem = validateSelection(files);
+  if (problem) {
+    setPhase(PHASES.ERROR);
+    setError(problem);
+    return;
+  }
 
     setPhase(PHASES.UPLOADING);
     setProgress(INITIAL_PROGRESS);

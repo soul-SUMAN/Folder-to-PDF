@@ -2,7 +2,7 @@ import FolderPicker from './components/FolderPicker';
 import UploadProgress from './components/UploadProgress';
 import { usePdfGenerator } from './hooks/usePdfGenerator';
 import { PHASES, BUSY_PHASES } from './constants/phases';
-import { MAX_FILE_COUNT } from './utils/filters';
+import { validateSelection } from './utils/validation'
 import { formatBytes } from './utils/format';
 import './App.css';
 
@@ -10,7 +10,7 @@ export default function App() {
   const { files, projectName, phase, progress, error, selectFolder, generate } = usePdfGenerator();
 
   const isBusy = BUSY_PHASES.includes(phase);
-  const isOverLimit = files.length > MAX_FILE_COUNT;
+  const isOverLimit = Boolean(validateSelection(files)); 
   const totalBytes = files.reduce((sum, file) => sum + file.size, 0);
 
   return (

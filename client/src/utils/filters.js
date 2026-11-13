@@ -1,31 +1,54 @@
+import path from 'path';
+
+export const MAX_FILE_BYTES = 500 * 1024;
+
 const IGNORED_DIRS = new Set([
-  'node_modules', '.git', 'dist', 'build', '.next', '.vercel',
-  'coverage', '.idea', '.vscode', '__pycache__', '.cache', '.turbo',
-  'venv', '.venv', 'env', 'target', 'out', '.parcel-cache', '.svelte-kit',
+  'node_modules', '.git', 'dist', 'build', '.next', '.nuxt', '.vercel', '.turbo',
+  '.cache', '.parcel-cache', '.svelte-kit', 'coverage', 'out', 'target', '.idea', '.vscode',
+  '__pycache__', 'venv', '.venv', 'env', 'site-packages', '.tox', '.nox',
+  '.mypy_cache', '.pytest_cache', '.ruff_cache', '.ipynb_checkpoints',
+  '.eggs', '__pypackages__', 'htmlcov', 'conda-meta',
 ]);
 
-const IGNORED_FILES = new Set(['package-lock.json', 'yarn.lock', 'pnpm-lock.yaml', '.DS_Store']);
+const IGNORED_DIR_SUFFIXES = ['.egg-info', '.dist-info'];
 
-const BINARY_EXTENSIONS = new Set([
-  '.png', '.jpg', '.jpeg', '.gif', '.webp', '.ico', '.svg', '.pdf',
-  '.zip', '.rar', '.7z', '.mp3', '.mp4', '.mov', '.woff', '.woff2',
-  '.ttf', '.eot', '.exe', '.dll', '.bin', '.lock',
+const IGNORED_FILES = new Set([
+  'package-lock.json', 'npm-shrinkwrap.json', 'yarn.lock', 'pnpm-lock.yaml',
 ]);
 
-const isSecretFile = (name) => /^\.env(\..+)?$/.test(name) && !/\.(example|sample|template)$/.test(name);
+const SOURCE_EXTENSIONS = new Set([
+  '.js', '.jsx', '.mjs', '.cjs', '.ts', '.tsx', '.vue', '.svelte',
+  '.py', '.pyi', '.ipynb', '.java', '.kt', '.go', '.rs', '.rb', '.php',
+  '.c', '.h', '.cpp', '.hpp', '.cs', '.swift', '.dart', '.lua', '.r', '.scala',
+  '.sh', '.bat', '.ps1', '.sql', '.graphql', '.proto',
+  '.html', '.css', '.scss', '.sass', '.less',
+  '.json', '.yml', '.yaml', '.toml', '.ini', '.cfg', '.xml',
+  '.md', '.txt', '.rst',
+]);
 
-const MAX_FILE_BYTES = 500 * 1024;
-export const MAX_FILE_COUNT = 2000;
+const SOURCE_FILENAMES = new Set([
+  'Dockerfile', 'Makefile', 'Procfile', '.gitignore', '.dockerignore',
+  '.editorconfig', '.prettierrc', '.eslintrc', '.babelrc',
+]);
 
-export const isAcceptedFile = (file) => {
-  const relativePath = file.webkitRelativePath;
+const ENV_TEMPLATE = /^\.env\.(example|sample|template)$/;
+
+const isSecretFile = (name) => /^\.env(\..+)?$/.test(name) && !ENV_TEMPLATE.test(name);
+
+const isIgnoredDir = (dir) =>
+  IGNORED_DIRS.has(dir) || IGNORED_DIR_SUFFIXES.some((suffix) => dir.endsWith(suffix));
+
+const isSourceFile = (name) =>
+  SOURCE_FILENAMES.has(name) ||
+  ENV_TEMPLATE.test(name) ||
+  SOURCE_EXTENSIONS.has(path.extname(name).toLowerCase());
+
+export const shouldIncludePath = (relativePath) => {
   const segments = relativePath.split('/');
-  const fileName = segments[segments.length - 1];
-  const ext = fileName.includes('.') ? `.${fileName.split('.').pop().toLowerCase()}` : '';
+  const name = segments[segments.length - 1];
 
-  if (segments.slice(0, -1).some((dir) => IGNORED_DIRS.has(dir))) return false;
-  if (IGNORED_FILES.has(fileName)) return false;
-  if (isSecretFile(fileName)) return false;
-  if (BINARY_EXTENSIONS.has(ext)) return false;
-  return file.size <= MAX_FILE_BYTES;
+  if (segments.slice(0, -1).some(isIgnoredDir)) return false;
+  if (IGNORED_FILES.has(name) || isSecretFile(name)) return false;
+
+  return isSourceFile(name);
 };
