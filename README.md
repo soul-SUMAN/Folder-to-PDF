@@ -82,7 +82,7 @@ Selected files are uploaded to the configured server and processed there; this i
 
 These measures do not prevent the server operator, host, or a compromised server from accessing data while it is being processed. Use this application only with code you are comfortable sending to the server. Use HTTPS in production, protect server and database access, and do not expose secrets in project files.
 
-The one-time PDF store is process-local. A server restart invalidates pending download links, and multi-instance deployments need sticky routing or a shared secure store to ensure a generated token can be downloaded by the same instance that created it. Configure Render's `CLIENT_URL` to the exact deployed frontend origin (for multiple origins, separate them with commas; trailing slashes are normalized) and Vercel's `VITE_API_URL` to the deployed API base URL (including `/api`). Do not use the development CORS behavior as a substitute for production origin configuration.
+The one-time PDF store is process-local. A server restart invalidates pending download links, and multi-instance deployments need sticky routing or a shared secure store to ensure a generated token can be downloaded by the same instance that created it. The production frontend origin `https://folder-to-pdf.vercel.app` is allowed by default. Configure Render's `CLIENT_URL` to the exact deployed frontend origin for other deployments (for multiple origins, separate them with commas; trailing slashes are normalized) and Vercel's `VITE_API_URL` to the deployed API base URL (including `/api`). Do not use the development CORS behavior as a substitute for production origin configuration.
 
 ## Useful commands
 

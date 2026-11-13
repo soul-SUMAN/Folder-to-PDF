@@ -14,6 +14,7 @@ const configuredOrigins = (process.env.CLIENT_URL ?? '')
   .map((origin) => new URL(origin).origin);
 const allowedOrigins = new Set([
   ...configuredOrigins,
+  'https://folder-to-pdf.vercel.app',
   'http://localhost:5173',
   'http://localhost:5174',
   'http://127.0.0.1:5173',
