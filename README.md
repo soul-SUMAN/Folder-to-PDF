@@ -70,6 +70,8 @@ The client filters files before upload. The server applies its own filtering as 
 
 - Maximum accepted file size: 500 KiB per file.
 - Maximum number of uploaded files: 2,000.
+- Maximum combined accepted file size per upload: 10 MiB.
+- Maximum request body size: 12 MiB.
 - Multer's request-level limit is 1 MiB per file and 5 MiB for the file-paths field; files larger than 500 KiB are subsequently excluded from the PDF.
 - Common generated/dependency directories such as `node_modules`, `.git`, `dist`, `build`, and `coverage` are skipped.
 - Common lock files, binary extensions, and `.env` files are skipped. `.env.example`, `.env.sample`, and `.env.template` are allowed.
