@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { generatePdf, downloadPdf } from '../api/pdfApi';
-import { filterAcceptedFiles } from '../utils/filters';
+import { isAcceptedFile, MAX_FILE_COUNT } from '../utils/filters';
 import { validateSelection } from '../utils/validation';
 import { PHASES } from '../constants/phases';
 
@@ -12,6 +12,11 @@ const ERROR_MESSAGES = {
   429: 'Too many requests. Please try again in a few minutes.',
   503: 'Server is busy. Please try again shortly.',
 };
+
+const getFileLimitMessage = (count) =>
+  `This folder has ${count} readable files, but the limit is ${MAX_FILE_COUNT}. Remove or exclude generated/dependency folders, then try again.`;
+
+
 
 const toProgress = ({ loaded, total }) => {
   const safeTotal = total ?? 0;
@@ -26,6 +31,8 @@ const toProgress = ({ loaded, total }) => {
   };
 };
 
+
+
 export const usePdfGenerator = () => {
   const [files, setFiles] = useState([]);
   const [projectName, setProjectName] = useState('');
@@ -33,25 +40,25 @@ export const usePdfGenerator = () => {
   const [progress, setProgress] = useState(INITIAL_PROGRESS);
   const [error, setError] = useState('');
 
-  const selectFolder = useCallback((fileList) => {
-    const all = Array.from(fileList);
-    const accepted = filterAcceptedFiles(all);
-    const problem = validateSelection(accepted);
+ const selectFolder = useCallback((fileList) => {
+  const all = Array.from(fileList);
+  const accepted = filterAcceptedFiles(all);
+  const problem = validateSelection(accepted);
 
-    setFiles(accepted);
-    setProjectName(all[0]?.webkitRelativePath.split('/')[0] ?? '');
-    setProgress(INITIAL_PROGRESS);
-    setPhase(problem ? PHASES.ERROR : PHASES.IDLE);
+  setFiles(accepted);
+  setProjectName(all[0]?.webkitRelativePath.split('/')[0] ?? '');
+  setProgress(INITIAL_PROGRESS);
+  setPhase(problem ? PHASES.ERROR : PHASES.IDLE);
+  setError(problem);
+}, []);
+
+const generate = useCallback(async () => {
+  const problem = validateSelection(files);
+  if (problem) {
+    setPhase(PHASES.ERROR);
     setError(problem);
-  }, []);
-
-  const generate = useCallback(async () => {
-    const problem = validateSelection(files);
-    if (problem) {
-      setPhase(PHASES.ERROR);
-      setError(problem);
-      return;
-    }
+    return;
+  }
 
     setPhase(PHASES.UPLOADING);
     setProgress(INITIAL_PROGRESS);

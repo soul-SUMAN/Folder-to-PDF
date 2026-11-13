@@ -1,6 +1,6 @@
+import path from 'path';
+
 export const MAX_FILE_BYTES = 500 * 1024;
-export const MAX_FILE_COUNT = 2000;
-export const MAX_TOTAL_BYTES = 10 * 1024 * 1024;
 
 const IGNORED_DIRS = new Set([
   'node_modules', '.git', 'dist', 'build', '.next', '.nuxt', '.vercel', '.turbo',
@@ -41,7 +41,7 @@ const isIgnoredDir = (dir) =>
 const isSourceFile = (name) =>
   SOURCE_FILENAMES.has(name) ||
   ENV_TEMPLATE.test(name) ||
-  SOURCE_EXTENSIONS.has(name.slice(name.lastIndexOf('.')).toLowerCase());
+  SOURCE_EXTENSIONS.has(path.extname(name).toLowerCase());
 
 export const shouldIncludePath = (relativePath) => {
   const segments = relativePath.split('/');
@@ -52,8 +52,3 @@ export const shouldIncludePath = (relativePath) => {
 
   return isSourceFile(name);
 };
-
-export const isAcceptedFile = (file) =>
-  shouldIncludePath(file.webkitRelativePath) && file.size <= MAX_FILE_BYTES;
-
-export const filterAcceptedFiles = (files) => files.filter(isAcceptedFile);
