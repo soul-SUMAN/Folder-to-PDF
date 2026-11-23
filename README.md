@@ -5,7 +5,7 @@ Folder to Master PDF is a React and Express app that turns a selected codebase i
 ## Features
 
 - Select a project folder in the browser.
-- See upload, file-processing, PDF-generation, and download-preparation progress.
+- See folder-scanning and upload loading screens, followed by file-processing, PDF-generation, and download-preparation progress.
 - Exclude common generated/dependency directories, binary file types, lock files, large files, and secret `.env` files.
 - Download the generated PDF through a one-time link that expires after five minutes.
 - Keep uploaded files and generated PDFs in server memory rather than writing them to disk.
@@ -57,13 +57,13 @@ npm run dev
 
 Open the local URL printed by Vite (usually `http://localhost:5173`). The server permits localhost Vite origins on any port for development; `CLIENT_URL` can also be set to the frontend origin.
 
-The deployed client uses `VITE_API_URL` (for example `https://folder-to-pdf.onrender.com/api`) and defaults to the production API URL above if the variable is unset.
+The deployed client sends API requests to its own `/api` path. `client/vercel.json` rewrites those requests to the Render API, avoiding browser cross-origin uploads.
 
 ## Using the app
 
 1. Choose a project folder and confirm Chrome's folder-upload prompt if it appears.
-2. The upload starts automatically. Follow the top upload bar until it reports that the files are ready.
-3. Click **Generate PDF**. Follow the **Processing files**, **Generating PDF**, and **Preparing download** stages.
+2. The app shows a folder-scanning screen, then an upload screen. After the upload completes, click **Generate PDF**.
+3. Follow the **Processing files**, **Generating PDF**, and **Preparing download** stages.
 4. The PDF downloads automatically when ready.
 
 ## File selection and limits
@@ -87,7 +87,7 @@ Selected files are uploaded to the configured server and processed there; this i
 
 These measures do not prevent the server operator, host, or a compromised server from accessing data while it is being processed. Use this application only with code you are comfortable sending to the server. Use HTTPS in production, protect server and database access, and do not expose secrets in project files.
 
-The one-time PDF store is process-local. A server restart invalidates pending download links, and multi-instance deployments need sticky routing or a shared secure store to ensure a generated token can be downloaded by the same instance that created it. The production frontend origin `https://folder-to-pdf.vercel.app` is allowed by default. Configure Render's `CLIENT_URL` to the exact deployed frontend origin for other deployments (for multiple origins, separate them with commas; trailing slashes are normalized) and Vercel's `VITE_API_URL` to the deployed API base URL (including `/api`). Do not use the development CORS behavior as a substitute for production origin configuration.
+The upload and download stores are process-local. A server restart invalidates staged uploads and pending download links, and multi-instance deployments need sticky routing or a shared secure store to ensure requests reach the same instance. The production frontend origin `https://folder-to-pdf.vercel.app` is allowed by default. Configure Render's `CLIENT_URL` to the exact deployed frontend origin for other deployments (for multiple origins, separate them with commas; trailing slashes are normalized).
 
 ## Useful commands
 

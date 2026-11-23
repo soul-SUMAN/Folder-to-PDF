@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://folder-to-pdf.onrender.com/api/:path*"
+    }
+  ]
+}

@@ -4,7 +4,7 @@
 Users select a code folder in the browser. The client filters accepted source files and uploads them to the server, which returns a one-time download link for a PDF containing the folder tree followed by each accepted file's code with line numbers and page numbers.
 
 ## Tech stack
-- **Client** (`/client`): React 19, Vite, Axios for downloads, XMLHttpRequest for upload and streamed progress, plain CSS, JavaScript ES modules.
+- **Client** (`/client`): React 19, Vite, Axios for uploads/downloads, XMLHttpRequest for streamed generation progress, plain CSS, JavaScript ES modules.
 - **Server** (`/server`): Node 20+, Express 5, Mongoose 9, Multer 2 (memory storage), PDFKit, helmet, cors, express-rate-limit, dotenv, ES modules (`"type": "module"`).
 - **Database:** MongoDB. Stores counts only: `fileCount`, `totalBytes`, `skippedCount`. Never store project names or file contents.
 - **Hosting:** frontend on Vercel, backend on Render, database on Atlas.
@@ -13,10 +13,10 @@ Users select a code folder in the browser. The client filters accepted source fi
 ```text
 client/src/
   api/pdfApi.js                 upload stream, PDF download, server wake-up API
-  components/                   FolderPicker, UploadProgress, ProcessingOverlay, Stepper
-  constants/phases.js           PHASES, BUSY_PHASES, STEPS
+  components/                   FolderPicker, LoadingScreen, GenerationProgress, Stepper
+  constants/phases.js           phases, busy phases, loading screens, generation steps
   hooks/usePdfGenerator.js      selection, validation, progress, and conversion flow
-  utils/                        file filters, validation, byte formatting
+  utils/                        file filters, validation, byte formatting, timing
   App.jsx, App.css, index.css, main.jsx
 server/src/
   index.js                      app setup, CORS allowlist, /health, routes, error handler
@@ -34,11 +34,11 @@ server/src/
 ```
 
 ## Request flow
-1. The client filters the selected folder and validates accepted file count and total size.
-2. After the user selects a folder and confirms Chrome's native folder-upload prompt, the client automatically POSTs `multipart/form-data` to `/api/pdf/upload`. The upload progress bar appears at the top of the page.
-3. The server validates and filters the files, stages accepted buffers in memory, and returns a one-time `uploadId`. The client then shows a **Generate PDF** button.
-4. When clicked, the client POSTs the `uploadId` to `/api/pdf/generate`. The server consumes the staged upload, streams processing and per-file PDF-generation progress as newline-delimited JSON, and returns `{ token, expiresInMs, fileCount }`.
-5. The client downloads `/api/pdf/download/:token` as a blob and triggers the browser download. The download token works once; its PDF buffer is zero-filled after sending or after 5 minutes.
+1. After folder selection, show a scanning screen before synchronously filtering files. Validate the accepted file count and total size.
+2. Upload accepted files to `/api/pdf/upload`; keep the loading screen visible for at least 1.2 seconds, even if the request finishes sooner.
+3. The server stages accepted buffers in memory and returns a one-time `uploadId`. Then show a **Generate PDF** button.
+4. When clicked, POST the `uploadId` to `/api/pdf/generate`. The server consumes the staged upload, streams processing and per-file PDF-generation progress as newline-delimited JSON, and returns `{ token, expiresInMs, fileCount }`.
+5. Download `/api/pdf/download/:token` as a blob. The download token works once; its PDF buffer is zero-filled after sending or after 5 minutes.
 6. Staged uploads are zero-filled after generation or after their 5-minute expiry.
 
 ## Non-negotiable privacy and security rules
@@ -68,7 +68,7 @@ server/src/
 ## Environment variables
 - Server: `PORT` (Render provides it), `MONGO_URI`, `CLIENT_URL` (full URL; comma-separate multiple origins).
 - Client development: optional `VITE_LOCAL_API_URL` (defaults to `http://localhost:5000/api`).
-- Client production: `VITE_API_URL` (ends in `/api`, defaults to the deployed Render API). Baked in at build time, so redeploy after changing it.
+- Client production: requests use the same-origin `/api` path, rewritten by `client/vercel.json` to the Render API.
 - Never commit `.env` files.
 
 ## Coding conventions

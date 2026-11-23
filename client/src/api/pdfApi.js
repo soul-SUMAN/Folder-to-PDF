@@ -2,17 +2,17 @@ import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.DEV
   ? import.meta.env.VITE_LOCAL_API_URL ?? 'http://localhost:5000/api'
-  : import.meta.env.VITE_API_URL ?? 'https://folder-to-pdf.onrender.com/api';
+  : '/api';
 
 const http = axios.create({ baseURL: API_BASE_URL });
 
-export const uploadFiles = async (files, onUploadProgress) => {
+export const uploadFiles = async (files) => {
   const formData = new FormData();
 
   formData.append('paths', JSON.stringify(files.map((f) => f.webkitRelativePath)));
   files.forEach((file) => formData.append('files', file));
 
-  const { data } = await http.post('/pdf/upload', formData, { onUploadProgress });
+  const { data } = await http.post('/pdf/upload', formData);
   return data;
 };
 

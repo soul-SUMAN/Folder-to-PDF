@@ -1,8 +1,14 @@
 import FolderPicker from './components/FolderPicker';
-import UploadProgress from './components/UploadProgress';
+import LoadingScreen from './components/LoadingScreen';
+import GenerationProgress from './components/GenerationProgress';
 import { usePdfGenerator } from './hooks/usePdfGenerator';
-import { PHASES, BUSY_PHASES } from './constants/phases';
-import { validateSelection } from './utils/validation'
+import {
+  PHASES,
+  BUSY_PHASES,
+  GENERATION_PHASES,
+  LOADING_SCREENS,
+} from './constants/phases';
+import { validateSelection } from './utils/validation';
 import { formatBytes } from './utils/format';
 import './App.css';
 
@@ -19,7 +25,9 @@ export default function App() {
   } = usePdfGenerator();
 
   const isBusy = BUSY_PHASES.includes(phase);
-  const isOverLimit = Boolean(validateSelection(files)); 
+  const isGenerating = GENERATION_PHASES.includes(phase);
+  const loadingScreen = LOADING_SCREENS[phase];
+  const isOverLimit = Boolean(validateSelection(files));
   const totalBytes = files.reduce((sum, file) => sum + file.size, 0);
 
   return (
@@ -39,14 +47,14 @@ export default function App() {
             <small>node_modules, .env files, binaries and lock files are skipped</small>
           </p>
 
-          {isBusy && <UploadProgress phase={phase} progress={progress} />}
-
           {phase === PHASES.READY && (
             <section className="panel ready-panel">
               <p>Upload complete. Your files are ready to be processed.</p>
               <button className="btn" onClick={generate}>Generate PDF</button>
             </section>
           )}
+
+          {isGenerating && <GenerationProgress phase={phase} progress={progress} />}
 
           {phase === PHASES.ERROR && files.length > 0 && (
             <button className="btn" onClick={retryUpload} disabled={isOverLimit}>
@@ -64,6 +72,7 @@ export default function App() {
         once and expires after 5 minutes.
       </footer>
 
+      {loadingScreen && <LoadingScreen {...loadingScreen} />}
     </main>
   );
 }
