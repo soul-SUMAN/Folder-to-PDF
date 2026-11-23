@@ -26,6 +26,7 @@ export const usePdfGenerator = () => {
   const [phase, setPhase] = useState(PHASES.IDLE);
   const [progress, setProgress] = useState(INITIAL_PROGRESS);
   const [uploadId, setUploadId] = useState('');
+  const [downloadToken, setDownloadToken] = useState('');
   const [error, setError] = useState('');
 
   const uploadSelection = useCallback(async (selectedFiles) => {
@@ -40,6 +41,7 @@ export const usePdfGenerator = () => {
     setPhase(PHASES.UPLOADING);
     setProgress(INITIAL_PROGRESS);
     setUploadId('');
+    setDownloadToken('');
     setError('');
 
     let staged;
@@ -87,15 +89,29 @@ export const usePdfGenerator = () => {
       });
 
       setUploadId('');
-      setPhase(PHASES.DOWNLOADING);
-      await downloadPdf(token, `${projectName}-master.pdf`);
+      setDownloadToken(token);
       setPhase(PHASES.SUCCESS);
     } catch (err) {
       setUploadId('');
       setError(ERROR_MESSAGES[err.response?.status] ?? 'Failed to generate PDF.');
       setPhase(PHASES.ERROR);
     }
-  }, [projectName, uploadId]);
+  }, [uploadId]);
+
+  const download = useCallback(async () => {
+    if (!downloadToken) return;
+
+    setPhase(PHASES.DOWNLOADING);
+    try {
+      await downloadPdf(downloadToken, `${projectName}-master.pdf`);
+      setDownloadToken('');
+      setPhase(PHASES.SUCCESS);
+    } catch {
+      setDownloadToken('');
+      setError('Failed to download the PDF. Please generate it again.');
+      setPhase(PHASES.ERROR);
+    }
+  }, [downloadToken, projectName]);
 
   const selectFolder = useCallback(async (fileList) => {
     const all = Array.from(fileList);
@@ -103,6 +119,7 @@ export const usePdfGenerator = () => {
     setFiles([]);
     setProjectName('');
     setUploadId('');
+    setDownloadToken('');
     setPhase(PHASES.SCANNING);
     setProgress(INITIAL_PROGRESS);
     setError('');
@@ -125,5 +142,16 @@ export const usePdfGenerator = () => {
 
   const retryUpload = useCallback(() => uploadSelection(files), [files, uploadSelection]);
 
-  return { files, projectName, phase, progress, error, selectFolder, generate, retryUpload };
+  return {
+    files,
+    projectName,
+    phase,
+    progress,
+    error,
+    downloadToken,
+    selectFolder,
+    generate,
+    download,
+    retryUpload,
+  };
 };

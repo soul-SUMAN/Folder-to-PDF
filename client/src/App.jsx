@@ -19,8 +19,10 @@ export default function App() {
     phase,
     progress,
     error,
+    downloadToken,
     selectFolder,
     generate,
+    download,
     retryUpload,
   } = usePdfGenerator();
 
@@ -64,7 +66,13 @@ export default function App() {
         </section>
       )}
 
-      {phase === PHASES.SUCCESS && <p className="ok">PDF downloaded ✅</p>}
+      {phase === PHASES.SUCCESS && !downloadToken && <p className="ok">PDF downloaded ✅</p>}
+      {phase === PHASES.SUCCESS && downloadToken && (
+        <section className="panel ready-panel">
+          <p>Your PDF is ready.</p>
+          <button className="btn" onClick={download}>Click to download PDF</button>
+        </section>
+      )}
       {phase === PHASES.ERROR && <p className="err">{error}</p>}
 
       <footer className="privacy">

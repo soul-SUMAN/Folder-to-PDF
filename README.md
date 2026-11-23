@@ -65,7 +65,7 @@ The deployed client sends API requests to its own `/api` path. `client/vercel.js
 1. Choose a project folder and confirm Chrome's folder-upload prompt if it appears.
 2. The app shows a folder-scanning screen, then an upload screen. After the upload completes, click **Generate PDF**.
 3. Follow the **Processing files**, **Generating PDF**, and **Preparing download** stages.
-4. The PDF downloads automatically when ready.
+4. Click **Download PDF** when generation finishes.
 
 ## File selection and limits
 
