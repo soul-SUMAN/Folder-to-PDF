@@ -26,7 +26,7 @@ server/src/
   services/pdf.service.js       PDFKit rendering and per-file progress
   services/uploadStore.js       staged in-memory uploads (5 min TTL, size and entry caps)
   services/downloadStore.js     in-memory one-time token store (5 min TTL, max 200 entries)
-  middleware/upload.js          Multer config + request size guard
+  middleware/upload.js          gzip envelope parser, Multer fallback, request size guard
   middleware/error.js           central error handler
   models/Conversion.js          stats-only model
   utils/filters.js               server-side file filtering
@@ -35,7 +35,7 @@ server/src/
 
 ## Request flow
 1. After folder selection, show a scanning screen before synchronously filtering files. Validate the accepted file count and total size.
-2. Upload accepted files to `/api/pdf/upload`; keep the loading screen visible for at least 1.2 seconds, even if the request finishes sooner.
+2. Upload accepted files to `/api/pdf/upload` as a gzip-compressed binary envelope (JSON manifest line followed by file bytes); keep the loading screen visible for at least 1.2 seconds, even if the request finishes sooner.
 3. The server stages accepted buffers in memory and returns a one-time `uploadId`. Then show a **Generate PDF** button.
 4. When clicked, POST the `uploadId` to `/api/pdf/generate`. The server consumes the staged upload, streams processing and per-file PDF-generation progress as newline-delimited JSON, and returns `{ token, expiresInMs, fileCount }`.
 5. Download `/api/pdf/download/:token` as a blob. The download token works once; its PDF buffer is zero-filled after sending or after 5 minutes.
@@ -43,7 +43,7 @@ server/src/
 
 ## Non-negotiable privacy and security rules
 - Never write uploaded files or generated PDFs to disk. Memory only.
-- Zero-fill staged upload buffers after generation or expiry, and generated PDF buffers when they cannot be stored.
+- Zero-fill decompressed request buffers, staged upload buffers after generation or expiry, and generated PDF buffers when they cannot be stored.
 - Never log file contents, file paths, or request bodies.
 - Never store project names or content in MongoDB. Counts only.
 - Never expose a route that lists conversions or history.
@@ -53,8 +53,8 @@ server/src/
 
 ## Limits
 - Max 2,000 files, 500 KiB per accepted file, 10 MiB total accepted source.
-- Server rejects requests over 12 MiB by `Content-Length` before Multer buffers them.
-- Multer limits: 1 MiB per file, 5 MiB for the `paths` field, 2,000 files.
+- Server rejects requests over 12 MiB by `Content-Length` and caps decompressed request bodies at 16 MiB.
+- Upload limits: 1 MiB per file, 5 MiB for paths/manifest data, 2,000 files. Multipart compatibility uses the same Multer limits.
 - Staged uploads are limited to 10 active entries and 64 MiB total in memory; each upload expires after 5 minutes.
 - The selected folder may exceed 1 GiB only when its accepted source files remain within these limits; excluded files are not uploaded. Do not raise limits without checking server memory and hosting capacity.
 - Render's free tier has 512 MiB RAM. The memory-only architecture cannot safely accept 1 GiB of source content.

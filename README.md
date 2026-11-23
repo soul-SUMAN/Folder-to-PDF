@@ -9,6 +9,7 @@ Folder to Master PDF is a React and Express app that turns a selected codebase i
 - Exclude common generated/dependency directories, binary file types, lock files, large files, and secret `.env` files.
 - Download the generated PDF through a one-time link that expires after five minutes.
 - Keep uploaded files and generated PDFs in server memory rather than writing them to disk.
+- Compress upload requests in the browser to avoid deployment-edge rejection of multipart payloads.
 
 ## Requirements
 
@@ -74,7 +75,8 @@ The client filters files before upload. The server applies its own filtering as 
 - Maximum number of uploaded files: 2,000.
 - Maximum combined accepted file size per upload: 10 MiB.
 - Maximum request body size: 12 MiB.
-- Multer's request-level limit is 1 MiB per file and 5 MiB for the file-paths field; files larger than 500 KiB are subsequently excluded from the PDF.
+- Uploads use a gzip-compressed binary envelope; the server caps the compressed request at 12 MiB and its expanded body at 16 MiB.
+- The server caps each uploaded file at 1 MiB and the file-path manifest at 5 MiB; files larger than 500 KiB are subsequently excluded from the PDF. Multipart requests retain the same Multer limits.
 - Common generated/dependency directories such as `node_modules`, `.git`, `dist`, `build`, and `coverage` are skipped.
 - Common lock files, binary extensions, and `.env` files are skipped. `.env.example`, `.env.sample`, and `.env.template` are allowed.
 - The selected folder itself may be larger than 1 GiB if its accepted source files still meet the limits above; ignored files are not uploaded. The memory-only server cannot accept 1 GiB of source content.

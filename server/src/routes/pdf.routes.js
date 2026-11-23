@@ -1,6 +1,10 @@
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
-import { limitRequestSize, upload } from '../middleware/upload.js';
+import {
+  compressedUploadBody,
+  limitRequestSize,
+  parseUploadRequest,
+} from '../middleware/upload.js';
 import { uploadFiles, generatePdfFromUpload, downloadPdf } from '../controllers/pdf.controller.js';
 
 const router = Router();
@@ -19,7 +23,14 @@ const validateToken = (req, res, next) =>
     ? next()
     : res.status(404).json({ message: 'Link expired or already used' });
 
-router.post('/upload', uploadLimiter, limitRequestSize, upload.array('files'), uploadFiles);
+router.post(
+  '/upload',
+  uploadLimiter,
+  limitRequestSize,
+  compressedUploadBody,
+  parseUploadRequest,
+  uploadFiles
+);
 router.post('/generate', generateLimiter, generatePdfFromUpload);
 router.get('/download/:token', validateToken, downloadPdf);
 

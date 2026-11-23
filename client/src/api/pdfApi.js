@@ -7,12 +7,27 @@ const API_BASE_URL = import.meta.env.DEV
 const http = axios.create({ baseURL: API_BASE_URL });
 
 export const uploadFiles = async (files) => {
-  const formData = new FormData();
+  if (typeof CompressionStream === 'undefined') {
+    throw new Error('Compressed uploads require an up-to-date browser. Please update Chrome.');
+  }
 
-  formData.append('paths', JSON.stringify(files.map((f) => f.webkitRelativePath)));
-  files.forEach((file) => formData.append('files', file));
+  const manifest = JSON.stringify({
+    files: files.map((file) => ({
+      path: file.webkitRelativePath,
+      size: file.size,
+    })),
+  });
+  const payload = new Blob([`${manifest}\n`, ...files], { type: 'application/octet-stream' });
+  const compressed = await new Response(
+    payload.stream().pipeThrough(new CompressionStream('gzip'))
+  ).blob();
 
-  const { data } = await http.post('/pdf/upload', formData);
+  const { data } = await http.post('/pdf/upload', compressed, {
+    headers: {
+      'Content-Type': 'application/octet-stream',
+      'Content-Encoding': 'gzip',
+    },
+  });
   return data;
 };
 
