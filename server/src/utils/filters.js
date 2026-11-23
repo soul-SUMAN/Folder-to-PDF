@@ -19,6 +19,7 @@ export const BINARY_EXTENSIONS = new Set([
 const isSecretFile = (name) => /^\.env(\..+)?$/.test(name) && !/\.(example|sample|template)$/.test(name);
 
 export const MAX_FILE_BYTES = 500 * 1024; // skip files over 500 KB
+export const MAX_TOTAL_BYTES = 10 * 1024 * 1024;
 
 export const shouldIncludePath = (relativePath) => {
   const segments = relativePath.split('/');

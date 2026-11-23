@@ -119,7 +119,7 @@ const drawFooters = (doc) => {
   }
 };
 
-export const generatePdf = ({ projectName, tree, files }) =>
+export const generatePdf = ({ projectName, tree, files, onProgress }) =>
   new Promise((resolve, reject) => {
     const doc = new PDFDocument({ margin: MARGIN, bufferPages: true, size: 'A4' });
     const chunks = [];
@@ -131,8 +131,21 @@ export const generatePdf = ({ projectName, tree, files }) =>
     registerFonts(doc);
     drawCover(doc, { projectName, files, tree });
     drawTree(doc, tree);
-    files.forEach((file, index) => drawFile(doc, file, index, files.length));
-    drawFooters(doc);
 
-    doc.end();
+    const renderFiles = async () => {
+      for (let index = 0; index < files.length; index += 1) {
+        drawFile(doc, files[index], index, files.length);
+        onProgress?.({
+          completed: index + 1,
+          total: files.length,
+          percent: Math.min(99, Math.round(((index + 1) / files.length) * 99)),
+        });
+        await new Promise((resolveNext) => setImmediate(resolveNext));
+      }
+
+      drawFooters(doc);
+      doc.end();
+    };
+
+    renderFiles().catch(reject);
   });

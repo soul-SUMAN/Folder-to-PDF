@@ -8,7 +8,10 @@ export default function FolderPicker({ onSelect, disabled }) {
         multiple
         hidden
         disabled={disabled}
-        onChange={(e) => onSelect(e.target.files)}
+        onChange={(event) => {
+          onSelect(event.target.files);
+          event.target.value = '';
+        }}
       />
       <span className="picker__icon">📁</span>
       <span>Choose your project folder</span>

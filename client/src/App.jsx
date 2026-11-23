@@ -7,7 +7,16 @@ import { formatBytes } from './utils/format';
 import './App.css';
 
 export default function App() {
-  const { files, projectName, phase, progress, error, selectFolder, generate } = usePdfGenerator();
+  const {
+    files,
+    projectName,
+    phase,
+    progress,
+    error,
+    selectFolder,
+    generate,
+    retryUpload,
+  } = usePdfGenerator();
 
   const isBusy = BUSY_PHASES.includes(phase);
   const isOverLimit = Boolean(validateSelection(files)); 
@@ -30,11 +39,18 @@ export default function App() {
             <small>node_modules, .env files, binaries and lock files are skipped</small>
           </p>
 
-          {isBusy ? (
-            <UploadProgress phase={phase} progress={progress} />
-          ) : (
-            <button className="btn" onClick={generate} disabled={isBusy || isOverLimit}>
-              Generate PDF
+          {isBusy && <UploadProgress phase={phase} progress={progress} />}
+
+          {phase === PHASES.READY && (
+            <section className="panel ready-panel">
+              <p>Upload complete. Your files are ready to be processed.</p>
+              <button className="btn" onClick={generate}>Generate PDF</button>
+            </section>
+          )}
+
+          {phase === PHASES.ERROR && files.length > 0 && (
+            <button className="btn" onClick={retryUpload} disabled={isOverLimit}>
+              Retry Upload
             </button>
           )}
         </section>

@@ -1,23 +1,51 @@
 import Stepper from './Stepper';
 import { formatBytes } from '../utils/format';
+import { PHASES } from '../constants/phases';
 
 export default function UploadProgress({ phase, progress }) {
-  const isUploading = phase === 'uploading';
+  const isUploading = phase === PHASES.UPLOADING;
   const phaseMessage = {
-    generating: 'Upload complete. Generating your PDF…',
-    downloading: 'PDF generated. Preparing your download…',
+    [PHASES.PROCESSING]: 'Processing uploaded files…',
+    [PHASES.GENERATING]: 'Generating your PDF…',
+    [PHASES.DOWNLOADING]: 'PDF generated. Preparing your download…',
   }[phase];
+
+  if (isUploading) {
+    return (
+      <div className="upload-banner" role="status" aria-live="polite">
+        <div className="upload-banner__heading">
+          <strong>Uploading your files…</strong>
+          <strong>{progress.percent}%</strong>
+        </div>
+        <div
+          className="bar"
+          role="progressbar"
+          aria-label="Codebase upload progress"
+          aria-valuenow={progress.percent}
+          aria-valuemin={0}
+          aria-valuemax={100}
+        >
+          <div className="bar__fill" style={{ width: `${progress.percent}%` }} />
+        </div>
+        <p className="panel__meta">
+          {progress.total
+            ? `${formatBytes(progress.loaded)} uploaded · ${formatBytes(progress.remaining)} left of ${formatBytes(progress.total)}`
+            : 'Starting upload…'}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="panel">
       <Stepper phase={phase} />
 
-      {isUploading ? (
+      {phase !== PHASES.DOWNLOADING ? (
         <>
           <div
             className="bar"
             role="progressbar"
-            aria-label="Codebase upload progress"
+            aria-label={`${phaseMessage} progress`}
             aria-valuenow={progress.percent}
             aria-valuemin={0}
             aria-valuemax={100}
@@ -28,12 +56,13 @@ export default function UploadProgress({ phase, progress }) {
           <p className="panel__meta">
             {progress.total ? (
               <>
-                <strong>{progress.percent}%</strong> · {formatBytes(progress.loaded)} uploaded · {formatBytes(progress.remaining)} left
+                <strong>{progress.percent}%</strong>
+                {progress.message && <> · {progress.message}</>}
                 <br />
-                <span>{formatBytes(progress.total)} total</span>
+                <span>{progress.loaded} of {progress.total} files</span>
               </>
             ) : (
-              'Uploading codebase…'
+              phaseMessage
             )}
           </p>
         </>

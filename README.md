@@ -5,7 +5,7 @@ Folder to Master PDF is a React and Express app that turns a selected codebase i
 ## Features
 
 - Select a project folder in the browser.
-- See upload progress, then PDF-generation and download-preparation status.
+- See upload, file-processing, PDF-generation, and download-preparation progress.
 - Exclude common generated/dependency directories, binary file types, lock files, large files, and secret `.env` files.
 - Download the generated PDF through a one-time link that expires after five minutes.
 - Keep uploaded files and generated PDFs in server memory rather than writing them to disk.
@@ -41,10 +41,10 @@ The server connects to MongoDB before it starts listening. Keep MongoDB running.
 
 ### 2. Configure and run the client
 
-Create `client/.env`:
+For local development, the client defaults to `http://localhost:5000/api`. To use a different local API, set `VITE_LOCAL_API_URL` in `client/.env`:
 
 ```env
-VITE_API_URL=http://localhost:5000/api
+VITE_LOCAL_API_URL=http://localhost:5000/api
 ```
 
 Install dependencies and start Vite:
@@ -57,11 +57,13 @@ npm run dev
 
 Open the local URL printed by Vite (usually `http://localhost:5173`). The server permits localhost Vite origins on any port for development; `CLIENT_URL` can also be set to the frontend origin.
 
+The deployed client uses `VITE_API_URL` (for example `https://folder-to-pdf.onrender.com/api`) and defaults to the production API URL above if the variable is unset.
+
 ## Using the app
 
-1. Choose a project folder.
-2. Click **Generate PDF**. Selecting a folder does not upload it; the upload starts when generation is requested.
-3. Follow the progress panel through **Uploading codebase**, **Generating PDF**, and **Preparing download**.
+1. Choose a project folder and confirm Chrome's folder-upload prompt if it appears.
+2. The upload starts automatically. Follow the top upload bar until it reports that the files are ready.
+3. Click **Generate PDF**. Follow the **Processing files**, **Generating PDF**, and **Preparing download** stages.
 4. The PDF downloads automatically when ready.
 
 ## File selection and limits
@@ -75,12 +77,13 @@ The client filters files before upload. The server applies its own filtering as 
 - Multer's request-level limit is 1 MiB per file and 5 MiB for the file-paths field; files larger than 500 KiB are subsequently excluded from the PDF.
 - Common generated/dependency directories such as `node_modules`, `.git`, `dist`, `build`, and `coverage` are skipped.
 - Common lock files, binary extensions, and `.env` files are skipped. `.env.example`, `.env.sample`, and `.env.template` are allowed.
+- The selected folder itself may be larger than 1 GiB if its accepted source files still meet the limits above; ignored files are not uploaded. The memory-only server cannot accept 1 GiB of source content.
 
 The server also rate-limits PDF generation to 10 requests per IP per 15 minutes.
 
 ## Privacy and deployment notes
 
-Selected files are uploaded to the configured server and processed there; this is not browser-only or zero-knowledge processing. The server buffers uploads and the generated PDF in memory, and the uploaded buffers are zero-filled after request processing. A generated PDF is held in an in-memory, one-time download store for up to five minutes. Conversion records in MongoDB contain counts and byte totals, not project names or file contents.
+Selected files are uploaded to the configured server and processed there; this is not browser-only or zero-knowledge processing. The server stages uploads in memory for up to five minutes, zero-fills them after PDF generation or expiration, and holds generated PDFs in an in-memory, one-time download store for up to five minutes. Conversion records in MongoDB contain counts and byte totals, not project names or file contents.
 
 These measures do not prevent the server operator, host, or a compromised server from accessing data while it is being processed. Use this application only with code you are comfortable sending to the server. Use HTTPS in production, protect server and database access, and do not expose secrets in project files.
 
